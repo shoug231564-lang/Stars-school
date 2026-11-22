@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>نجوم الإنجاز - متابعة المهام والنجوم</title>
+  <title>نجوم الإنجاز - تأكيد إنجاز المهام</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --pink: #ff4fa3;
       --purple: #7b42f6;
       --cyan: #00c2ff;
-      --bg: #fdf7ff;
       --card: #ffffff;
       --text: #1f1b2e;
       --muted: #6b6480;
+      --done-bg: #eefcf5;
+      --done-border: #22c55e;
     }
 
     * {
@@ -47,174 +49,302 @@
     }
 
     .container {
-      max-width: 900px;
+      max-width: 820px;
       margin: 1.5rem auto;
-      padding: 0 1rem 2rem;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
+      padding: 0 1rem 2.5rem;
     }
 
     .card {
       background: var(--card);
       border-radius: 18px;
-      padding: 1.1rem;
+      padding: 1.15rem;
       box-shadow: 0 8px 24px rgba(31, 27, 46, 0.06);
       border: 1px solid rgba(123, 66, 246, 0.12);
+      margin-bottom: 1.1rem;
     }
 
-    .stat-label {
-      color: var(--muted);
-      font-size: 0.85rem;
-      margin-bottom: 0.4rem;
+    .task-banner {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.6rem;
     }
 
-    .stat-value {
-      font-size: 1.5rem;
+    .task-title {
+      font-size: 1.1rem;
       font-weight: 700;
       color: var(--purple);
     }
 
-    .toolbar {
+    .summary-pill {
+      background: #f4eeff;
+      color: var(--purple);
+      padding: 0.35rem 0.8rem;
+      border-radius: 999px;
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .add-row {
       display: flex;
       flex-wrap: wrap;
       gap: 0.6rem;
-      margin-bottom: 1rem;
-    }
-
-    input, button {
-      border-radius: 12px;
-      padding: 0.7rem 0.9rem;
-      font-size: 0.95rem;
-      border: 1px solid #dfd7f2;
+      margin-top: 0.75rem;
     }
 
     input {
       flex: 1;
       min-width: 180px;
+      border-radius: 12px;
+      padding: 0.68rem 0.85rem;
+      font-size: 0.92rem;
+      border: 1px solid #dfd7f2;
       background: #fff;
+      color: var(--text);
     }
 
     button {
       cursor: pointer;
       border: none;
-      font-weight: 600;
+      border-radius: 12px;
+      padding: 0.68rem 0.95rem;
+      font-size: 0.92rem;
+      font-weight: 700;
       color: #fff;
-      background: linear-gradient(90deg, var(--pink), var(--purple));
-    }
-
-    button.secondary {
       background: linear-gradient(90deg, var(--purple), var(--cyan));
     }
 
-    .student-item {
+    .student-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 0.75rem;
       padding: 0.85rem 1rem;
       border-radius: 14px;
       background: #faf7ff;
-      margin-bottom: 0.65rem;
       border: 1px solid #ece3ff;
+      margin-bottom: 0.65rem;
+      transition: all 0.2s ease;
     }
 
-    .badge {
-      background: linear-gradient(90deg, #ff79b8, #7b42f6);
-      color: #fff;
-      padding: 0.3rem 0.7rem;
-      border-radius: 999px;
-      font-size: 0.85rem;
+    .student-row.done {
+      background: var(--done-bg);
+      border-color: var(--done-border);
+    }
+
+    .student-name {
       font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .student-status {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+
+    .student-row.done .student-status {
+      color: #15803d;
+      font-weight: 600;
+    }
+
+    .star-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.45rem;
+      background: #ece6fa;
+      color: #9b92b5;
+      padding: 0;
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+
+    .star-btn:active {
+      transform: scale(0.92);
+    }
+
+    .star-btn.active {
+      background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan));
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(255, 79, 163, 0.35);
     }
 
     .note {
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       color: var(--muted);
-      margin-top: 0.75rem;
+      margin-top: 0.5rem;
     }
   </style>
 </head>
 <body>
   <header>
     <h1>نجوم الإنجاز</h1>
-    <p>منصة متابعة المهام والنجوم للطلاب والطالبات</p>
+    <p>اضغط على النجمة بجانب اسمك لتأكيد إنجاز المطلوب بدل كتابة «تم» في الشات</p>
   </header>
 
   <main class="container">
-    <section class="grid">
-      <div class="card">
-        <div class="stat-label">عدد الطلاب</div>
-        <div class="stat-value" id="studentsCount">30</div>
+    <section class="card">
+      <div class="task-banner">
+        <div>
+          <div style="font-size: 0.82rem; color: var(--muted);">المهمة الحالية</div>
+          <div class="task-title" id="currentTaskText">إنجاز المهمة المطلوبة</div>
+        </div>
+        <div class="summary-pill" id="doneSummary">0 من 0 أنجزوا</div>
       </div>
-      <div class="card">
-        <div class="stat-label">مجموع النجوم</div>
-        <div class="stat-value" id="totalStars">0 ⭐</div>
+
+      <div class="add-row">
+        <input type="text" id="taskEditInput" placeholder="تغيير عنوان المهمة (للمعلم)..." />
+        <button onclick="updateTaskTitle()">تحديث المهمة</button>
       </div>
-      <div class="card">
-        <div class="stat-label">حالة الربط</div>
-        <div class="stat-value" style="font-size: 1rem; color: #0095c7;">جاهز لربط Supabase</div>
+
+      <div class="add-row">
+        <input type="text" id="newStudentInput" placeholder="إضافة اسم طالب جديد للقائمة..." />
+        <button onclick="addStudent()">إضافة اسم</button>
+      </div>
+
+      <div class="note" id="modeNote">
+        يعمل الآن في الوضع التجريبي — وعند ربط Supabase سيتم حفظ ضغطات النجوم لجميع الطلاب مباشرة.
       </div>
     </section>
 
     <section class="card">
-      <h2 style="margin-top: 0; font-size: 1.15rem;">قائمة الطلاب والنجوم</h2>
-      <div class="toolbar">
-        <input type="text" id="studentNameInput" placeholder="اكتب اسم الطالب لإضافته تجريبيًا..." />
-        <button onclick="addDemoStudent()">إضافة طالب</button>
-        <button class="secondary" onclick="addStarToFirst()">+1 نجمة</button>
-      </div>
       <div id="studentsList"></div>
-      <p class="note">
-        ملاحظة: هذه نسخة بداية محلية لتجربة الواجهة فورًا، وسيتم ربطها بقاعدة بيانات Supabase (`students_public`, `student_secrets`, `stars`) في الخطوة التالية.
-      </p>
     </section>
   </main>
 
   <script>
-    const demoStudents = [
-      { id: 1, name: "نجم الأمل", stars: 5 },
-      { id: 2, name: "نجم التميز", stars: 8 },
-      { id: 3, name: "نجم الإبداع", stars: 4 }
+    const SUPABASE_URL = "";
+    const SUPABASE_ANON_KEY = "";
+
+    const hasSupabase = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+    const sb = hasSupabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+    let currentTask = "إنجاز المهمة المطلوبة";
+
+    let students = [
+      { id: "1", student_name: "أحمد", completed: false },
+      { id: "2", student_name: "سارة", completed: false },
+      { id: "3", student_name: "خالد", completed: false },
+      { id: "4", student_name: "نورة", completed: false }
     ];
+
+    function updateTaskTitle() {
+      const val = document.getElementById("taskEditInput").value.trim();
+      if (!val) return;
+      currentTask = val;
+      document.getElementById("currentTaskText").textContent = currentTask;
+      document.getElementById("taskEditInput").value = "";
+    }
 
     function renderStudents() {
       const list = document.getElementById("studentsList");
-      const totalStarsEl = document.getElementById("totalStars");
+      const summary = document.getElementById("doneSummary");
       list.innerHTML = "";
 
-      let sumStars = 0;
-      demoStudents.forEach((s) => {
-        sumStars += s.stars;
+      let doneCount = 0;
+
+      students.forEach((st) => {
+        if (st.completed) doneCount += 1;
+
         const row = document.createElement("div");
-        row.className = "student-item";
-        row.innerHTML = `<strong>${s.name}</strong><span class="badge">${s.stars} ⭐</span>`;
+        row.className = `student-row ${st.completed ? "done" : ""}`;
+
+        const info = document.createElement("div");
+        info.innerHTML = `
+          <div class="student-name">${st.student_name}</div>
+          <div class="student-status">${st.completed ? "تم الإنجاز ⭐" : "بانتظار التأكيد"}</div>
+        `;
+
+        const btn = document.createElement("button");
+        btn.className = `star-btn ${st.completed ? "active" : ""}`;
+        btn.title = st.completed ? "إلغاء النجمة" : "تأكيد الإنجاز بالنجمة";
+        btn.textContent = "★";
+        btn.onclick = () => toggleStar(st.id);
+
+        row.appendChild(info);
+        row.appendChild(btn);
         list.appendChild(row);
       });
 
-      totalStarsEl.textContent = `${sumStars} ⭐`;
+      summary.textContent = `${doneCount} من ${students.length} أنجزوا`;
     }
 
-    function addDemoStudent() {
-      const input = document.getElementById("studentNameInput");
+    async function toggleStar(studentId) {
+      const student = students.find((s) => s.id === studentId);
+      if (!student) return;
+
+      const nextState = !student.completed;
+      student.completed = nextState;
+      renderStudents();
+
+      if (hasSupabase && nextState) {
+        await sb.from("stars").insert([
+          {
+            student_id: studentId,
+            task_title: currentTask,
+            points: 1
+          }
+        ]);
+      }
+    }
+
+    async function addStudent() {
+      const input = document.getElementById("newStudentInput");
       const name = input.value.trim();
       if (!name) return;
-      demoStudents.push({ id: Date.now(), name, stars: 1 });
+
+      if (hasSupabase) {
+        const { data, error } = await sb
+          .from("students_public")
+          .insert([{ student_name: name }])
+          .select()
+          .single();
+
+        if (!error && data) {
+          students.push({ id: data.id, student_name: data.student_name, completed: false });
+          input.value = "";
+          renderStudents();
+          return;
+        }
+      }
+
+      students.push({
+        id: String(Date.now()),
+        student_name: name,
+        completed: false
+      });
       input.value = "";
       renderStudents();
     }
 
-    function addStarToFirst() {
-      if (demoStudents.length > 0) {
-        demoStudents[0].stars += 1;
-        renderStudents();
+    async function init() {
+      document.getElementById("currentTaskText").textContent = currentTask;
+
+      if (hasSupabase) {
+        const { data: pubStudents } = await sb
+          .from("students_public")
+          .select("id, student_name")
+          .order("created_at", { ascending: true });
+
+        if (pubStudents && pubStudents.length > 0) {
+          students = pubStudents.map((s) => ({
+            id: s.id,
+            student_name: s.student_name,
+            completed: false
+          }));
+        }
+        document.getElementById("modeNote").textContent =
+          "متصل بـ Supabase — عند ضغط الطالب على النجمة يُسجّل إنجازه تلقائيًا.";
       }
+
+      renderStudents();
     }
 
-    renderStudents();
+    init();
   </script>
 </body>
 </html>
