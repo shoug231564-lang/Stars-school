@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نجوم الإنجاز - متابعة المهام والنجوم</title>
+  <style>
+    :root {
+      --pink: #ff4fa3;
+      --purple: #7b42f6;
+      --cyan: #00c2ff;
+      --bg: #fdf7ff;
+      --card: #ffffff;
+      --text: #1f1b2e;
+      --muted: #6b6480;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #fff0f7 0%, #f4eeff 50%, #ebfbff 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(90deg, var(--pink), var(--purple), var(--cyan));
+      color: #fff;
+      padding: 1.25rem 1rem;
+      text-align: center;
+      box-shadow: 0 6px 20px rgba(123, 66, 246, 0.18);
+    }
+
+    header h1 {
+      margin: 0 0 0.35rem;
+      font-size: 1.6rem;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 0.95rem;
+      opacity: 0.95;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 1.5rem auto;
+      padding: 0 1rem 2rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 1.1rem;
+      box-shadow: 0 8px 24px rgba(31, 27, 46, 0.06);
+      border: 1px solid rgba(123, 66, 246, 0.12);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--purple);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+
+    input, button {
+      border-radius: 12px;
+      padding: 0.7rem 0.9rem;
+      font-size: 0.95rem;
+      border: 1px solid #dfd7f2;
+    }
+
+    input {
+      flex: 1;
+      min-width: 180px;
+      background: #fff;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(90deg, var(--pink), var(--purple));
+    }
+
+    button.secondary {
+      background: linear-gradient(90deg, var(--purple), var(--cyan));
+    }
+
+    .student-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.85rem 1rem;
+      border-radius: 14px;
+      background: #faf7ff;
+      margin-bottom: 0.65rem;
+      border: 1px solid #ece3ff;
+    }
+
+    .badge {
+      background: linear-gradient(90deg, #ff79b8, #7b42f6);
+      color: #fff;
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .note {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>نجوم الإنجاز</h1>
+    <p>منصة متابعة المهام والنجوم للطلاب والطالبات</p>
+  </header>
+
+  <main class="container">
+    <section class="grid">
+      <div class="card">
+        <div class="stat-label">عدد الطلاب</div>
+        <div class="stat-value" id="studentsCount">30</div>
+      </div>
+      <div class="card">
+        <div class="stat-label">مجموع النجوم</div>
+        <div class="stat-value" id="totalStars">0 ⭐</div>
+      </div>
+      <div class="card">
+        <div class="stat-label">حالة الربط</div>
+        <div class="stat-value" style="font-size: 1rem; color: #0095c7;">جاهز لربط Supabase</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 style="margin-top: 0; font-size: 1.15rem;">قائمة الطلاب والنجوم</h2>
+      <div class="toolbar">
+        <input type="text" id="studentNameInput" placeholder="اكتب اسم الطالب لإضافته تجريبيًا..." />
+        <button onclick="addDemoStudent()">إضافة طالب</button>
+        <button class="secondary" onclick="addStarToFirst()">+1 نجمة</button>
+      </div>
+      <div id="studentsList"></div>
+      <p class="note">
+        ملاحظة: هذه نسخة بداية محلية لتجربة الواجهة فورًا، وسيتم ربطها بقاعدة بيانات Supabase (`students_public`, `student_secrets`, `stars`) في الخطوة التالية.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const demoStudents = [
+      { id: 1, name: "نجم الأمل", stars: 5 },
+      { id: 2, name: "نجم التميز", stars: 8 },
+      { id: 3, name: "نجم الإبداع", stars: 4 }
+    ];
+
+    function renderStudents() {
+      const list = document.getElementById("studentsList");
+      const totalStarsEl = document.getElementById("totalStars");
+      list.innerHTML = "";
+
+      let sumStars = 0;
+      demoStudents.forEach((s) => {
+        sumStars += s.stars;
+        const row = document.createElement("div");
+        row.className = "student-item";
+        row.innerHTML = `<strong>${s.name}</strong><span class="badge">${s.stars} ⭐</span>`;
+        list.appendChild(row);
+      });
+
+      totalStarsEl.textContent = `${sumStars} ⭐`;
+    }
+
+    function addDemoStudent() {
+      const input = document.getElementById("studentNameInput");
+      const name = input.value.trim();
+      if (!name) return;
+      demoStudents.push({ id: Date.now(), name, stars: 1 });
+      input.value = "";
+      renderStudents();
+    }
+
+    function addStarToFirst() {
+      if (demoStudents.length > 0) {
+        demoStudents[0].stars += 1;
+        renderStudents();
+      }
+    }
+
+    renderStudents();
+  </script>
+</body>
+</html>
